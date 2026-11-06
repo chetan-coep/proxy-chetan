@@ -1,0 +1,10 @@
+# ninja log v7
+91	2729	8156836621277667	CMakeFiles/TokenForge.dir/src/linked_list.cpp.obj	5914b9aab71b0d9e
+83	2768	8156836621190621	CMakeFiles/TokenForge.dir/src/max_heap.cpp.obj	9232fdd83ea4a65b
+54	2891	8156836620878360	CMakeFiles/TokenForge.dir/src/tokenizer.cpp.obj	3541bd86ca469a88
+62	3140	8156836620979797	CMakeFiles/TokenForge.dir/src/pair_frequency.cpp.obj	8607432c668d8ea8
+45	3306	8156836620788774	CMakeFiles/TokenForge.dir/src/main.cpp.obj	8b2fc44db5879579
+72	3585	8156836621071298	CMakeFiles/TokenForge.dir/src/vocabulary.cpp.obj	e9102d3da6ff84ea
+101	3641	8156836621374490	CMakeFiles/TokenForge.dir/src/bpe_trainer.cpp.obj	ce8e29c3018f668e
+112	3734	8156836621498921	CMakeFiles/TokenForge.dir/src/bpe_tokenizer.cpp.obj	46aefeec458e290
+3735	4188	8156836657723711	TokenForge.exe	f4da6b71c2763832
