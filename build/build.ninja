@@ -126,6 +126,97 @@ build TokenForge.exe: CXX_EXECUTABLE_LINKER__TokenForge_ CMakeFiles/TokenForge.d
   TARGET_PDB = TokenForge.exe.dbg
   TARGET_SUPPORT_DIR = CMakeFiles\TokenForge.dir
 
+# =============================================================================
+# Object build statements for EXECUTABLE target tokenforge_api
+
+
+#############################################
+# Order-only phony target for tokenforge_api
+
+build cmake_object_order_depends_target_tokenforge_api: phony || .
+
+build CMakeFiles/tokenforge_api.dir/src/api_cli.cpp.obj: CXX_COMPILER__tokenforge_api_unscanned_ C$:/final_year/temp$ project/ai$ course/project3/TokenForge/src/api_cli.cpp || cmake_object_order_depends_target_tokenforge_api
+  DEP_FILE = CMakeFiles\tokenforge_api.dir\src\api_cli.cpp.obj.d
+  FLAGS = -std=gnu++17
+  INCLUDES = -I"C:/final_year/temp project/ai course/project3/TokenForge/include"
+  OBJECT_DIR = CMakeFiles\tokenforge_api.dir
+  OBJECT_FILE_DIR = CMakeFiles\tokenforge_api.dir\src
+  TARGET_SUPPORT_DIR = CMakeFiles\tokenforge_api.dir
+
+build CMakeFiles/tokenforge_api.dir/src/tokenizer.cpp.obj: CXX_COMPILER__tokenforge_api_unscanned_ C$:/final_year/temp$ project/ai$ course/project3/TokenForge/src/tokenizer.cpp || cmake_object_order_depends_target_tokenforge_api
+  DEP_FILE = CMakeFiles\tokenforge_api.dir\src\tokenizer.cpp.obj.d
+  FLAGS = -std=gnu++17
+  INCLUDES = -I"C:/final_year/temp project/ai course/project3/TokenForge/include"
+  OBJECT_DIR = CMakeFiles\tokenforge_api.dir
+  OBJECT_FILE_DIR = CMakeFiles\tokenforge_api.dir\src
+  TARGET_SUPPORT_DIR = CMakeFiles\tokenforge_api.dir
+
+build CMakeFiles/tokenforge_api.dir/src/pair_frequency.cpp.obj: CXX_COMPILER__tokenforge_api_unscanned_ C$:/final_year/temp$ project/ai$ course/project3/TokenForge/src/pair_frequency.cpp || cmake_object_order_depends_target_tokenforge_api
+  DEP_FILE = CMakeFiles\tokenforge_api.dir\src\pair_frequency.cpp.obj.d
+  FLAGS = -std=gnu++17
+  INCLUDES = -I"C:/final_year/temp project/ai course/project3/TokenForge/include"
+  OBJECT_DIR = CMakeFiles\tokenforge_api.dir
+  OBJECT_FILE_DIR = CMakeFiles\tokenforge_api.dir\src
+  TARGET_SUPPORT_DIR = CMakeFiles\tokenforge_api.dir
+
+build CMakeFiles/tokenforge_api.dir/src/vocabulary.cpp.obj: CXX_COMPILER__tokenforge_api_unscanned_ C$:/final_year/temp$ project/ai$ course/project3/TokenForge/src/vocabulary.cpp || cmake_object_order_depends_target_tokenforge_api
+  DEP_FILE = CMakeFiles\tokenforge_api.dir\src\vocabulary.cpp.obj.d
+  FLAGS = -std=gnu++17
+  INCLUDES = -I"C:/final_year/temp project/ai course/project3/TokenForge/include"
+  OBJECT_DIR = CMakeFiles\tokenforge_api.dir
+  OBJECT_FILE_DIR = CMakeFiles\tokenforge_api.dir\src
+  TARGET_SUPPORT_DIR = CMakeFiles\tokenforge_api.dir
+
+build CMakeFiles/tokenforge_api.dir/src/max_heap.cpp.obj: CXX_COMPILER__tokenforge_api_unscanned_ C$:/final_year/temp$ project/ai$ course/project3/TokenForge/src/max_heap.cpp || cmake_object_order_depends_target_tokenforge_api
+  DEP_FILE = CMakeFiles\tokenforge_api.dir\src\max_heap.cpp.obj.d
+  FLAGS = -std=gnu++17
+  INCLUDES = -I"C:/final_year/temp project/ai course/project3/TokenForge/include"
+  OBJECT_DIR = CMakeFiles\tokenforge_api.dir
+  OBJECT_FILE_DIR = CMakeFiles\tokenforge_api.dir\src
+  TARGET_SUPPORT_DIR = CMakeFiles\tokenforge_api.dir
+
+build CMakeFiles/tokenforge_api.dir/src/linked_list.cpp.obj: CXX_COMPILER__tokenforge_api_unscanned_ C$:/final_year/temp$ project/ai$ course/project3/TokenForge/src/linked_list.cpp || cmake_object_order_depends_target_tokenforge_api
+  DEP_FILE = CMakeFiles\tokenforge_api.dir\src\linked_list.cpp.obj.d
+  FLAGS = -std=gnu++17
+  INCLUDES = -I"C:/final_year/temp project/ai course/project3/TokenForge/include"
+  OBJECT_DIR = CMakeFiles\tokenforge_api.dir
+  OBJECT_FILE_DIR = CMakeFiles\tokenforge_api.dir\src
+  TARGET_SUPPORT_DIR = CMakeFiles\tokenforge_api.dir
+
+build CMakeFiles/tokenforge_api.dir/src/bpe_trainer.cpp.obj: CXX_COMPILER__tokenforge_api_unscanned_ C$:/final_year/temp$ project/ai$ course/project3/TokenForge/src/bpe_trainer.cpp || cmake_object_order_depends_target_tokenforge_api
+  DEP_FILE = CMakeFiles\tokenforge_api.dir\src\bpe_trainer.cpp.obj.d
+  FLAGS = -std=gnu++17
+  INCLUDES = -I"C:/final_year/temp project/ai course/project3/TokenForge/include"
+  OBJECT_DIR = CMakeFiles\tokenforge_api.dir
+  OBJECT_FILE_DIR = CMakeFiles\tokenforge_api.dir\src
+  TARGET_SUPPORT_DIR = CMakeFiles\tokenforge_api.dir
+
+build CMakeFiles/tokenforge_api.dir/src/bpe_tokenizer.cpp.obj: CXX_COMPILER__tokenforge_api_unscanned_ C$:/final_year/temp$ project/ai$ course/project3/TokenForge/src/bpe_tokenizer.cpp || cmake_object_order_depends_target_tokenforge_api
+  DEP_FILE = CMakeFiles\tokenforge_api.dir\src\bpe_tokenizer.cpp.obj.d
+  FLAGS = -std=gnu++17
+  INCLUDES = -I"C:/final_year/temp project/ai course/project3/TokenForge/include"
+  OBJECT_DIR = CMakeFiles\tokenforge_api.dir
+  OBJECT_FILE_DIR = CMakeFiles\tokenforge_api.dir\src
+  TARGET_SUPPORT_DIR = CMakeFiles\tokenforge_api.dir
+
+
+# =============================================================================
+# Link build statements for EXECUTABLE target tokenforge_api
+
+
+#############################################
+# Link the executable tokenforge_api.exe
+
+build tokenforge_api.exe: CXX_EXECUTABLE_LINKER__tokenforge_api_ CMakeFiles/tokenforge_api.dir/src/api_cli.cpp.obj CMakeFiles/tokenforge_api.dir/src/tokenizer.cpp.obj CMakeFiles/tokenforge_api.dir/src/pair_frequency.cpp.obj CMakeFiles/tokenforge_api.dir/src/vocabulary.cpp.obj CMakeFiles/tokenforge_api.dir/src/max_heap.cpp.obj CMakeFiles/tokenforge_api.dir/src/linked_list.cpp.obj CMakeFiles/tokenforge_api.dir/src/bpe_trainer.cpp.obj CMakeFiles/tokenforge_api.dir/src/bpe_tokenizer.cpp.obj
+  LINK_LIBRARIES = -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
+  OBJECT_DIR = CMakeFiles\tokenforge_api.dir
+  POST_BUILD = cd .
+  PRE_LINK = cd .
+  TARGET_FILE = tokenforge_api.exe
+  TARGET_IMPLIB = libtokenforge_api.dll.a
+  TARGET_PDB = tokenforge_api.exe.dbg
+  TARGET_SUPPORT_DIR = CMakeFiles\tokenforge_api.dir
+
 
 #############################################
 # Utility command for edit_cache
@@ -154,6 +245,8 @@ build rebuild_cache: phony CMakeFiles/rebuild_cache.util
 
 build TokenForge: phony TokenForge.exe
 
+build tokenforge_api: phony tokenforge_api.exe
+
 # =============================================================================
 # Folder targets.
 
@@ -162,7 +255,7 @@ build TokenForge: phony TokenForge.exe
 #############################################
 # Folder: C:/final_year/temp project/ai course/project3/TokenForge/build
 
-build all: phony TokenForge.exe
+build all: phony TokenForge.exe tokenforge_api.exe
 
 # =============================================================================
 # Built-in targets

@@ -124,6 +124,76 @@ std::vector<std::string> BPETokenizer::encodeToTokens(const std::string &text) c
   return tokens;
 }
 
+EncodingTrace BPETokenizer::encodeWithTrace(const std::string &text) const {
+  EncodingTrace trace;
+  trace.rawInput = text;
+  if (text.empty()) return trace;
+
+  std::vector<std::string> byteTokens = byteEncoder.stringToByteTokens(text);
+  trace.initialTokens = byteTokens;
+
+  LinkedList list;
+  for (const auto &tok : byteTokens) {
+    list.append(tok);
+  }
+
+  auto getTokensFromList = [&list]() {
+    std::vector<std::string> cur;
+    Node *c = list.getHead();
+    while (c != nullptr) {
+      cur.push_back(c->token);
+      c = c->next;
+    }
+    return cur;
+  };
+
+  int stepCount = 0;
+  for (const auto &rule : mergeRules) {
+    bool mergedAny = false;
+    Node *curr = list.getHead();
+    int nodeIdx = 0;
+
+    while (curr != nullptr && curr->next != nullptr) {
+      if (curr->token == rule.first && curr->next->token == rule.second) {
+        std::vector<std::string> before = getTokensFromList();
+        int atIdx = nodeIdx;
+
+        list.mergeAdjacent(curr);
+        mergedAny = true;
+
+        std::vector<std::string> after = getTokensFromList();
+        std::vector<int> idsAfter;
+        for (const auto &tok : after) {
+          idsAfter.push_back(vocabulary.getTokenId(tok));
+        }
+
+        EncodingStep step;
+        step.stepNumber = ++stepCount;
+        step.ruleFirst = rule.first;
+        step.ruleSecond = rule.second;
+        step.mergedToken = rule.first + rule.second;
+        step.tokensBefore = before;
+        step.tokensAfter = after;
+        step.tokenIdsAfter = idsAfter;
+        step.mergedIndex = atIdx;
+
+        trace.steps.push_back(step);
+        curr = curr->next;
+      } else {
+        curr = curr->next;
+      }
+      nodeIdx++;
+    }
+  }
+
+  trace.finalTokens = getTokensFromList();
+  for (const auto &tok : trace.finalTokens) {
+    trace.finalTokenIds.push_back(vocabulary.getTokenId(tok));
+  }
+
+  return trace;
+}
+
 // Step 7.5: Implement decoding (Token IDs -> Text)
 std::string BPETokenizer::decode(const std::vector<int> &tokenIds) const {
   std::vector<std::string> tokens;
@@ -169,5 +239,8 @@ bool BPETokenizer::roundTripTest(const std::string &text) const {
 
 const Vocabulary &BPETokenizer::getVocabulary() const { return vocabulary; }
 
-size_t BPETokenizer::getMergeRulesCount() const { return mergeRules.size(); }
+const std::vector<std::pair<std::string, std::string>> &BPETokenizer::getMergeRules() const {
+  return mergeRules;
+}
 
+size_t BPETokenizer::getMergeRulesCount() const { return mergeRules.size(); }

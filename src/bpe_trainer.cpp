@@ -4,6 +4,7 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <algorithm>
 
 BPETrainer::BPETrainer() {}
 
@@ -22,6 +23,8 @@ void BPETrainer::initializeCorpus(const std::vector<std::string> &corpus) {
   }
   corpusSequences.clear();
   mergeRules.clear();
+  trainingHistory.clear();
+  initialRawCorpus = corpus;
 
   // Initialize all 256 byte tokens (0..255) for GPT-style Byte-Pair Encoding
   vocabulary.initializeBaseByteTokens();
@@ -98,6 +101,21 @@ int BPETrainer::mergePairInCorpus(const std::string &first,
   return totalMerges;
 }
 
+std::vector<std::vector<std::string>> BPETrainer::getCurrentCorpusSequences() const {
+  std::vector<std::vector<std::string>> res;
+  res.reserve(corpusSequences.size());
+  for (const LinkedList *seq : corpusSequences) {
+    std::vector<std::string> row;
+    Node *curr = seq->getHead();
+    while (curr != nullptr) {
+      row.push_back(curr->token);
+      curr = curr->next;
+    }
+    res.push_back(row);
+  }
+  return res;
+}
+
 // Step 6.5 & 6.6: Complete training loop until stopping condition
 void BPETrainer::train(int maxMerges, int minFrequency) {
   std::cout << "\n========== STARTING BPE TRAINING LOOP ==========\n";
@@ -112,6 +130,13 @@ void BPETrainer::train(int maxMerges, int minFrequency) {
       std::cout << "Stopping: No adjacent pairs remaining in the corpus.\n";
       break;
     }
+
+    // Sort pair frequencies for recording
+    std::vector<std::pair<std::string, int>> sortedPairs(pairFreq.begin(), pairFreq.end());
+    std::sort(sortedPairs.begin(), sortedPairs.end(), [](const auto &a, const auto &b) {
+      if (a.second != b.second) return a.second > b.second;
+      return a.first < b.first;
+    });
 
     // 6.3: Insert pairs into Max Heap
     MaxHeap heap = buildPairHeap(pairFreq);
@@ -146,6 +171,23 @@ void BPETrainer::train(int maxMerges, int minFrequency) {
     // 6.5: Update vocabulary and record merge rules
     int newId = vocabulary.addToken(merged);
     mergeRules.push_back({first, second, merged, top.frequency});
+
+    // Record iteration step for Training Explorer
+    TrainingIterationStep step;
+    step.iteration = iter;
+    step.selectedFirst = first;
+    step.selectedSecond = second;
+    step.mergedToken = merged;
+    step.frequency = top.frequency;
+    step.newVocabularyId = newId;
+    step.vocabularySize = static_cast<int>(vocabulary.size());
+    step.totalMergesInCorpus = mergesDone;
+    // Keep top 15 pairs for visualization
+    size_t numPairsToKeep = std::min(sortedPairs.size(), static_cast<size_t>(15));
+    step.topAdjacentPairs.assign(sortedPairs.begin(), sortedPairs.begin() + numPairsToKeep);
+    step.corpusTokensSnapshot = getCurrentCorpusSequences();
+
+    trainingHistory.push_back(step);
 
     std::cout << "Iteration " << std::setw(2) << iter
               << ": Merged ('" << first << "' + '" << second
@@ -188,6 +230,14 @@ const Vocabulary &BPETrainer::getVocabulary() const { return vocabulary; }
 
 const std::vector<MergeRule> &BPETrainer::getMergeRules() const { return mergeRules; }
 
+const std::vector<TrainingIterationStep> &BPETrainer::getTrainingHistory() const {
+  return trainingHistory;
+}
+
+const std::vector<std::string> &BPETrainer::getInitialRawCorpus() const {
+  return initialRawCorpus;
+}
+
 size_t BPETrainer::getCorpusSize() const { return corpusSequences.size(); }
 
 bool BPETrainer::saveMergeRules(const std::string &filename) const {
@@ -213,5 +263,3 @@ bool BPETrainer::saveModel(const std::string &vocabPath, const std::string &merg
   bool mergesSaved = saveMergeRules(mergesPath);
   return vocabSaved && mergesSaved;
 }
-
-

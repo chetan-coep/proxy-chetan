@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TokenForge – Interactive BPE Tokenizer Studio</title>
+  
+  <!-- Inter & JetBrains Mono Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#f5f3ff',
+              100: '#ede9fe',
+              500: '#8b5cf6',
+              600: '#7c3aed',
+              700: '#6d28d9',
+            },
+            slateDark: {
+              950: '#0b0f17',
+              900: '#0f172a',
+              850: '#131d33',
+              800: '#1e293b',
+              750: '#243248',
+              700: '#334155'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Anti-flash: apply saved theme before React renders -->
+  <script>
+    (function() {
+      var t = localStorage.getItem('tf_theme') || 'dark';
+      if (t === 'dark') document.documentElement.classList.add('dark');
+    })();
+  </script>
+
+  <!-- React 18, ReactDOM 18 & Babel Standalone -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    /* Theme-aware base */
+    body {
+      background: var(--bg-base, #f0ebe4);
+      color: var(--text-primary, #2a2118);
+      font-family: 'Inter', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-color, #e2d9cf); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted, #9e8e80); }
+
+    /* Smooth focus rings */
+    *:focus-visible { outline: 2px solid var(--accent-primary, #7c5cbf); outline-offset: 2px; }
+
+    /* Range slider thumb */
+    input[type=range]::-webkit-slider-thumb { accent-color: var(--accent-primary, #7c5cbf); }
+
+    /* Prevent flash-of-wrong-theme: set initial dark vars before React renders */
+    html.dark body { background: #0f1117; color: #e8eaf2; }
+  </style>
+</head>
+<body class="font-sans antialiased selection:bg-purple-500 selection:text-white">
+  <div id="root"></div>
+
+  <!-- Lucide icons via SVG components inline in Babel script -->
+  <script type="text/babel" src="app.jsx"></script>
+</body>
+</html>
+

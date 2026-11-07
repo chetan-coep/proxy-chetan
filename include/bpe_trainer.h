@@ -16,11 +16,27 @@ struct MergeRule {
   int frequency;
 };
 
+// Recorded snapshot of an iteration for the interactive Training Explorer
+struct TrainingIterationStep {
+  int iteration;
+  std::string selectedFirst;
+  std::string selectedSecond;
+  std::string mergedToken;
+  int frequency;
+  int newVocabularyId;
+  int vocabularySize;
+  int totalMergesInCorpus;
+  std::vector<std::pair<std::string, int>> topAdjacentPairs; // top frequent pairs
+  std::vector<std::vector<std::string>> corpusTokensSnapshot; // sequences snapshot
+};
+
 class BPETrainer {
 private:
   std::vector<LinkedList*> corpusSequences;
   Vocabulary vocabulary;
   std::vector<MergeRule> mergeRules;
+  std::vector<TrainingIterationStep> trainingHistory;
+  std::vector<std::string> initialRawCorpus;
 
 public:
   BPETrainer();
@@ -46,11 +62,14 @@ public:
   void displayMergeRules() const;
   const Vocabulary &getVocabulary() const;
   const std::vector<MergeRule> &getMergeRules() const;
+  const std::vector<TrainingIterationStep> &getTrainingHistory() const;
+  const std::vector<std::string> &getInitialRawCorpus() const;
+  std::vector<std::vector<std::string>> getCurrentCorpusSequences() const;
   size_t getCorpusSize() const;
+
   // Step 7.1 & 7.2: Save trained model (vocabulary & merge rules)
   bool saveMergeRules(const std::string &filename) const;
   bool saveModel(const std::string &vocabPath, const std::string &mergesPath) const;
 };
 
 #endif
-

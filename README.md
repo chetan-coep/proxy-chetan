@@ -1,155 +1,146 @@
-# TokenForge — GPT-Style Byte-Level BPE Tokenizer (256 Byte Base)
+# TokenForge — Interactive Byte-Pair Encoding (BPE) Tokenizer Studio
 
-TokenForge is a modular, high-performance Byte-Level Byte Pair Encoding (BBPE) tokenizer implemented in modern C++ (C++17), following the tokenization architecture used by GPT-2, GPT-4, and Tiktoken.
+TokenForge is an educational Byte-Pair Encoding (BBPE) tokenizer developed in **modern C++ (C++17)** integrated with a developer-grade **React Web Studio**.
 
----
-
-## 1. Key Enhancements & Capabilities
-
-1. **Pre-Initialized 256 Byte Tokens (IDs 0..255)**:
-   - The base vocabulary is pre-loaded with all 256 possible byte values ($0\text{x}00$ through $0\text{xFF}$).
-   - **Zero Out-of-Vocabulary (OOV)**: Any arbitrary byte sequence or character in any language can be represented without `<unk>`.
-2. **Full UTF-8 Multi-Byte Support**:
-   - Accented characters (`é`, `ñ`, `ç`), international scripts, and 4-byte emojis (`🚀`) decompose into their raw UTF-8 constituent bytes.
-3. **Lossless Whitespace & Punctuation Handling**:
-   - Uses canonical GPT-2 byte-to-unicode mapping: spaces map to visible byte token `Ġ` (byte 32), newlines to `Ċ` (byte 10), and tabs to `ĉ` (byte 9).
-   - Punctuation marks (`!`, `$`, `(`, `)`, `%`, `,`, `:`) are preserved consistently without dropping or corrupting symbols.
-4. **Learned Subword Merges (IDs 256+)**:
-   - Frequent byte pairs merge into subword tokens with IDs starting from 256 onwards.
-   - Example: `'l'` (108) + `'ow'` (256) $\to$ `'low'` (ID 258).
+It implements the foundational tokenization principles behind **GPT-2, GPT-4, and Tiktoken**, featuring a full 256-byte foundation, binary max-heap pair extraction, doubly-linked list token mutability, and interactive step-by-step training and encoding explorers.
 
 ---
 
-## 2. Project Structure
+## 🌟 Key Features & Capabilities
+
+1. **Zero Out-of-Vocabulary (OOV) Guarantee**:
+   - Pre-initializes all 256 single-byte tokens (IDs `0..255`) mapped reversibly using canonical GPT-2 byte-to-unicode mappings (`Ġ` for space, `Ċ` for newline, `ĉ` for tab).
+   - Any arbitrary byte sequence, character, international script, punctuation symbol, or 4-byte emoji (`🚀`) is fully supported without `<unk>`.
+
+2. **100% Lossless Round-Trip Fidelity**:
+   - Exact text reconstruction (`decode(encode(text)) == text`) across all inputs, including code, emoji sequences, accents (`café`), and symbols (`$100 & 50%`).
+
+3. **Dynamic User-Driven Dataset Training**:
+   - **No Hardcoded Files**: The system requires users to upload their own `.txt` dataset before training.
+   - Real-time file validation (UTF-8 encoding check, empty file check, 50 MB upload limit).
+   - Shows live dataset metrics (filename, size, line count, and preview) without exposing server-side file paths.
+
+4. **Production & Deployment-Ready Security**:
+   - **Zero Filepath Exposure**: Server filesystem paths (`C:\...`, internal model folders) are strictly hidden from all frontend views and API responses.
+   - **Sanitized Errors**: Safe, informative error handling without leaking stack traces or internal implementation paths.
+   - **Clean Results View**: Displays learned subword tokens, token IDs, and compression ratios cleanly.
+   - **Configurable Binding**: Binds to `HOST` (default `0.0.0.0`) and `PORT` (default `8000`) environment variables for seamless deployment on cloud providers (Render, Railway, VPS, Docker).
+
+5. **Eye-Friendly Dual Theme System**:
+   - **Comfortable Light Mode**: Warm cream background (`#f0ebe4`), soft ivory surfaces (`#faf6f1`), warm borders (`#e2d9cf`), soft violet accents (`#7c5cbf`), and dark chocolate text (`#2a2118`) that prevents eye fatigue.
+   - **Textured Dark Mode**: Sophisticated slate surface with a subtle radial dot-grid texture on the dashboard welcome banner, charcoal containers, and muted violet highlights.
+   - **Instant Anti-Flash**: Zero theme flicker on page refresh via pre-render theme bootstrap.
+
+6. **Public Developer Tool (No Auth Required)**:
+   - Zero login, signup, or user tracking barriers. Open the URL and begin exploring immediately.
+
+---
+
+## 📁 Project Architecture
 
 ```
-project3/phase1/
-├── CMakeLists.txt              # Build configuration with all source modules
+TokenForge/
+├── CMakeLists.txt              # C++17 CMake configuration for TokenForge & tokenforge_api
 ├── README.md                   # Complete documentation
-├── data/
-│   └── corpus.txt              # Training dataset file
-├── models/
-│   ├── merges.txt              # Persisted BPE merge rules
-│   └── vocab.txt               # Persisted vocabulary with IDs (256 base + merges)
+├── server.py                   # Deployment-ready FastAPI backend adapter
+├── build/                      # Compiled C++ binaries (TokenForge.exe, tokenforge_api.exe)
+├── data/                       # Optional sample datasets
+├── models/                     # Saved vocabulary & merge rules
+│   ├── vocab.txt               # Serialized vocabulary (Base 256 + learned merges)
+│   └── merges.txt              # Serialized learned BPE merge rules
+├── uploads/                    # Uploaded user datasets
 ├── include/
-│   ├── byte_encoder.h          # GPT-style Byte-to-Unicode mapping (256 bytes)
-│   ├── bpe_tokenizer.h         # Inference Tokenizer (encode & decode)
-│   ├── bpe_trainer.h           # BPE training engine
-│   ├── linked_list.h           # Doubly linked list for token sequences
-│   ├── max_heap.h              # Binary max-heap priority queue
-│   ├── pair_frequency.h        # Adjacent pair counter
-│   ├── tokenizer.h             # Corpus file reader
-│   └── vocabulary.h            # Bi-directional token <-> ID mappings
-└── src/
-    ├── bpe_tokenizer.cpp       # Inference Tokenizer implementation
-    ├── bpe_trainer.cpp         # BPE training implementation
-    ├── linked_list.cpp         # Linked list & mergeAdjacent implementation
-    ├── main.cpp                # Combined corpus ID & input/output test runner
-    ├── max_heap.cpp            # Max-heap implementation
-    ├── pair_frequency.cpp      # Bigram frequency implementation
-    ├── tokenizer.cpp           # File stream reader implementation
-    └── vocabulary.cpp          # Vocabulary serialization implementation
+│   ├── byte_encoder.h          # GPT-2 style reversible 256-byte Unicode mapping
+│   ├── vocabulary.h            # Bidirectional vocabulary mapping (Token <-> ID)
+│   ├── linked_list.h           # Doubly-linked list for word token sequence mutation
+│   ├── max_heap.h              # Binary max-heap for pair frequency priority extraction
+│   ├── pair_frequency.h        # Frequency counting structures
+│   ├── tokenizer.h             # Word-level baseline helper
+│   ├── bpe_trainer.h           # BPE training loop engine & history tracking
+│   └── bpe_tokenizer.h         # Inference engine: tokenization, trace, decoding
+├── src/
+│   ├── vocabulary.cpp
+│   ├── linked_list.cpp
+│   ├── max_heap.cpp
+│   ├── pair_frequency.cpp
+│   ├── tokenizer.cpp
+│   ├── bpe_trainer.cpp
+│   ├── bpe_tokenizer.cpp
+│   ├── api_cli.cpp             # JSON API bridge executable for the web application
+│   └── main.cpp                # Terminal test suite and verification benchmark
+└── web/
+    ├── index.html              # Modern SPA HTML host with anti-flash script & CSS variables
+    └── app.jsx                 # Full React application with all 8 interactive views
 ```
 
 ---
 
-## 3. How to Build & Run
+## 🚀 How to Build and Run
+
+### 1. Build the C++ Core Binaries
+
+Make sure your C++17 compiler (GCC/MinGW/Clang) and CMake are available:
 
 ```powershell
-# 1. Add compiler and CMake to PATH
-$env:PATH = "C:\msys64\ucrt64\bin;" + $env:PATH
-
-# 2. Navigate to phase1 folder
-cd "c:\final_year\temp project\ai course\project3\phase1"
-
-# 3. Configure and compile with CMake
+Set-Location "project3/TokenForge"
 cmake -S . -B build
 cmake --build build
+```
 
-# 4. Run the executable
+This compiles:
+- `build/TokenForge.exe`: The standalone CLI verification test runner.
+- `build/tokenforge_api.exe`: The JSON CLI interface consumed by the Python backend.
+
+### 2. Run Terminal Verification Tests
+
+```powershell
 .\build\TokenForge.exe
 ```
 
+The test runner:
+- Pre-loads all 256 base byte tokens.
+- Executes BPE training on the dataset.
+- Prints the corpus sequence tokenization table.
+- Runs 6 verification test cases demonstrating **100% Exact Round-Trip Reconstruction** across plain words, compounds, punctuation, whitespace, and multi-byte UTF-8 emojis (`🚀`).
+
+### 3. Start the Interactive Web Application
+
+```powershell
+python server.py
+```
+
+Then open your browser at:
+👉 **[http://127.0.0.1:8000](http://127.0.0.1:8000)**
+
 ---
 
-## 4. Execution Output
+## 🌐 Web Studio Walkthrough
 
-### Part 1: ID and Corresponding Corpus
-```
-======================================================================
-          ID AND THEIR CORRESPONDING CORPUS (TRAINING DATA)           
-======================================================================
+| View | Purpose |
+|---|---|
+| **Dashboard** | Overview of model readiness, live vocabulary size, learned rules, and active dataset metrics with textured welcome banner. |
+| **Train Tokenizer** | Drag-and-drop or browse `.txt` dataset upload, configure merge iterations and frequency thresholds, and execute BPE training. |
+| **Tokenize Text** | Enter arbitrary text or use quick sample chips to view subword tokenization, token IDs, compression ratio, and 100% exact decoded round-trip. |
+| **Training Explorer** | Scrub through iterations or press **Play** to visualize highest frequency pair selection from the heap and node merges in corpus linked lists. |
+| **Encoding Explorer** | Step through sequential merge rule applications on raw text inputs to see how characters combine into subwords. |
+| **Vocabulary Table** | Search, filter (Base Byte vs Learned), and export `vocab.txt`. |
+| **Merge Rules** | Chronological ledger of learned BPE pairs, frequencies, and exportable `merges.txt`. |
+| **Settings** | Switch between comfortable Light mode and textured Dark mode, inspect model metrics, or reset the model. |
 
-Corpus ID Corpus Text             Token Count   Encoded Token IDs
-----------------------------------------------------------------------
-Line 1    "low"                   1             [258]
-Line 2    "lower"                 2             [258, 257]
-Line 3    "lowest"                4             [258, 101, 115, 116]
-Line 4    "low"                   1             [258]
-Line 5    "lower"                 2             [258, 257]
-Line 6    "programming"           4             [265, 105, 110, 103]
-Line 7    "programmer"            2             [265, 257]
-Line 8    "programming"           4             [265, 105, 110, 103]
-Line 9    "computer"              7             [99, 111, 109, 112, 117, 116, 257]
-Line 10   "computer science"      15            [99, 111, 109, 112, 117, 116, 257, 32, 115, 99, 105, 101, 110, 99, 101]
-```
+---
 
-### Part 2: Input and Corresponding Output
-```
-======================================================================
-                   INPUT AND THEIR CORRESPONDING OUTPUT               
-======================================================================
+## ☁️ Deployment Configuration
 
-[Test Case 1]
-  Input Text     : "lowest programmer"
-  Subword Tokens : ['low', 'e', 's', 't', 'Ġ', 'programm', 'er']
-  Token IDs      : [258, 101, 115, 116, 32, 265, 257]
-  Decoded Output : "lowest programmer"
-  Verification   : SUCCESS (Exact 100% Reconstruction)
-----------------------------------------------------------------------
+To deploy TokenForge to any cloud platform (Render, Railway, Fly.io, or Docker):
 
-[Test Case 2]
-  Input Text     : "computer science"
-  Subword Tokens : ['c', 'o', 'm', 'p', 'u', 't', 'er', 'Ġ', 's', 'c', 'i', 'e', 'n', 'c', 'e']
-  Token IDs      : [99, 111, 109, 112, 117, 116, 257, 32, 115, 99, 105, 101, 110, 99, 101]
-  Decoded Output : "computer science"
-  Verification   : SUCCESS (Exact 100% Reconstruction)
-----------------------------------------------------------------------
+1. **Environment Variables**:
+   - `HOST`: Set to `0.0.0.0` (default) to bind to all network interfaces.
+   - `PORT`: Set by your cloud host (e.g., `8000`, `10000`).
 
-[Test Case 3]
-  Input Text     : "low, lower, lowest! (Cost: $100 & 50%)"
-  Subword Tokens : ['low', ',', 'Ġ', 'low', 'er', ',', 'Ġ', 'low', 'e', 's', 't', '!', 'Ġ', '(', 'C', 'o', 's', 't', ':', 'Ġ', '$', '1', '0', '0', 'Ġ', '&', 'Ġ', '5', '0', '%', ')']
-  Token IDs      : [258, 44, 32, 258, 257, 44, 32, 258, 101, 115, 116, 33, 32, 40, 67, 111, 115, 116, 58, 32, 36, 49, 48, 48, 32, 38, 32, 53, 48, 37, 41]
-  Decoded Output : "low, lower, lowest! (Cost: $100 & 50%)"
-  Verification   : SUCCESS (Exact 100% Reconstruction)
-----------------------------------------------------------------------
+2. **Run Command**:
+   ```bash
+   python server.py
+   ```
 
-[Test Case 4]
-  Input Text     : "  spaces   and    tabs\t\n"
-  Subword Tokens : ['Ġ', 'Ġ', 's', 'p', 'a', 'c', 'e', 's', 'Ġ', 'Ġ', 'Ġ', 'a', 'n', 'd', 'Ġ', 'Ġ', 'Ġ', 'Ġ', 't', 'a', 'b', 's', 'ĉ', 'Ċ']
-  Token IDs      : [32, 32, 115, 112, 97, 99, 101, 115, 32, 32, 32, 97, 110, 100, 32, 32, 32, 32, 116, 97, 98, 115, 9, 10]
-  Decoded Output : "  spaces   and    tabs\t\n"
-  Verification   : SUCCESS (Exact 100% Reconstruction)
-----------------------------------------------------------------------
-
-[Test Case 5]
-  Input Text     : "TokenForge C++ 🚀 café éñ Français"
-  Subword Tokens : ['T', 'o', 'k', 'e', 'n', 'F', 'o', 'r', 'g', 'e', 'Ġ', 'C', '+', '+', 'Ġ', 'ð', 'Ł', 'ļ', 'Ģ', 'Ġ', 'c', 'a', 'f', 'Ã', '©', 'Ġ', 'Ã', '©', 'Ã', '±', 'Ġ', 'F', 'r', 'a', 'n', 'Ã', '§', 'a', 'i', 's']
-  Token IDs      : [84, 111, 107, 101, 110, 70, 111, 114, 103, 101, 32, 67, 43, 43, 32, 240, 159, 154, 128, 32, 99, 97, 102, 195, 169, 32, 195, 169, 195, 177, 32, 70, 114, 97, 110, 195, 167, 97, 105, 115]
-  Decoded Output : "TokenForge C++ 🚀 café éñ Français"
-  Verification   : SUCCESS (Exact 100% Reconstruction)
-----------------------------------------------------------------------
-
-[Test Case 6]
-  Input Text     : "programmer programming lowest low"
-  Subword Tokens : ['programm', 'er', 'Ġ', 'programm', 'i', 'n', 'g', 'Ġ', 'low', 'e', 's', 't', 'Ġ', 'low']
-  Token IDs      : [265, 257, 32, 265, 105, 110, 103, 32, 258, 101, 115, 116, 32, 258]
-  Decoded Output : "programmer programming lowest low"
-  Verification   : SUCCESS (Exact 100% Reconstruction)
-----------------------------------------------------------------------
-
-======================================================================
- Summary: 6 / 6 Input/Output Verification Tests Passed Successfully!
- All 256 Byte Tokens, UTF-8 Text, Spaces & Punctuation Handled losslessly.
-======================================================================
-```
+3. **Cross-Platform Binary Resolution**:
+   - The server automatically resolves `tokenforge_api.exe` on Windows and `tokenforge_api` on Linux/macOS.

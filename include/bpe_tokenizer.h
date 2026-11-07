@@ -7,6 +7,26 @@
 #include "vocabulary.h"
 #include "byte_encoder.h"
 
+// Step details for the interactive Encoding Explorer
+struct EncodingStep {
+  int stepNumber;
+  std::string ruleFirst;
+  std::string ruleSecond;
+  std::string mergedToken;
+  std::vector<std::string> tokensBefore;
+  std::vector<std::string> tokensAfter;
+  std::vector<int> tokenIdsAfter;
+  int mergedIndex; // index of first node that was merged
+};
+
+struct EncodingTrace {
+  std::string rawInput;
+  std::vector<std::string> initialTokens;
+  std::vector<EncodingStep> steps;
+  std::vector<std::string> finalTokens;
+  std::vector<int> finalTokenIds;
+};
+
 class BPETokenizer {
 private:
   Vocabulary vocabulary;
@@ -33,6 +53,9 @@ public:
   // Encode to subword token strings (for inspection)
   std::vector<std::string> encodeToTokens(const std::string &text) const;
 
+  // Full detailed trace for Encoding Explorer
+  EncodingTrace encodeWithTrace(const std::string &text) const;
+
   // Step 7.5: Implement decoding (Token IDs -> Text)
   std::string decode(const std::vector<int> &tokenIds) const;
 
@@ -40,8 +63,8 @@ public:
   bool roundTripTest(const std::string &text) const;
 
   const Vocabulary &getVocabulary() const;
+  const std::vector<std::pair<std::string, std::string>> &getMergeRules() const;
   size_t getMergeRulesCount() const;
 };
 
 #endif
-
