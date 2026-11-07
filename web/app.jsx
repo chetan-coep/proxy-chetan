@@ -129,6 +129,11 @@ const Icon = ({ name, className = "w-5 h-5", ...props }) => {
       <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
         <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>
       </svg>
+    ),
+    lock: (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+        <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
     )
   };
   return icons[name] || null;
@@ -258,14 +263,16 @@ function App() {
 
   useEffect(() => { refreshStatus(); }, []);
 
+  const isReady = Boolean(modelStatus.isTrained && modelStatus.hasDataset);
+
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
     { id: 'train', label: 'Train Tokenizer', icon: 'train' },
-    { id: 'tokenize', label: 'Tokenize Text', icon: 'tokenize' },
-    { id: 'explorer', label: 'Training Explorer', icon: 'explorer' },
-    { id: 'encodingExplorer', label: 'Encoding Explorer', icon: 'encodingExplorer' },
-    { id: 'vocabulary', label: 'Vocabulary', icon: 'vocabulary' },
-    { id: 'merges', label: 'Merge Rules', icon: 'mergeRules' },
+    { id: 'tokenize', label: 'Tokenize Text', icon: 'tokenize', requiresTraining: true },
+    { id: 'explorer', label: 'Training Explorer', icon: 'explorer', requiresTraining: true },
+    { id: 'encodingExplorer', label: 'Encoding Explorer', icon: 'encodingExplorer', requiresTraining: true },
+    { id: 'vocabulary', label: 'Vocabulary', icon: 'vocabulary', requiresTraining: true },
+    { id: 'merges', label: 'Merge Rules', icon: 'mergeRules', requiresTraining: true },
     { id: 'settings', label: 'Settings', icon: 'settings' }
   ];
 
@@ -304,18 +311,26 @@ function App() {
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const active = currentPage === item.id;
+            const locked = item.requiresTraining && !isReady;
             return (
               <button
                 key={item.id}
                 onClick={() => setCurrentPage(item.id)}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all"
+                className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all"
                 style={active
                   ? { background: 'var(--accent-soft)', color: 'var(--accent-primary)' }
                   : { color: 'var(--text-secondary)' }
                 }
               >
-                <Icon name={item.icon} className="w-4 h-4" style={active ? { color: 'var(--accent-primary)' } : { color: 'var(--text-muted)' }} />
-                <span>{item.label}</span>
+                <div className="flex items-center gap-3">
+                  <Icon name={item.icon} className="w-4 h-4" style={active ? { color: 'var(--accent-primary)' } : { color: 'var(--text-muted)' }} />
+                  <span>{item.label}</span>
+                </div>
+                {locked && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1 font-mono" style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)' }} title="Locked until training dataset is uploaded and trained">
+                    <Icon name="lock" className="w-3 h-3" />
+                  </span>
+                )}
               </button>
             );
           })}
@@ -326,15 +341,15 @@ function App() {
           <div className="p-3 rounded-lg text-xs" style={S.cardElevated}>
             <div className="flex items-center justify-between mb-1" style={S.textMuted}>
               <span>Engine Status</span>
-              <span className="inline-flex items-center gap-1 font-medium" style={{ color: '#10b981' }}>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block"></span>
-                Active
+              <span className="inline-flex items-center gap-1 font-medium" style={{ color: isReady ? '#10b981' : '#f59e0b' }}>
+                <span className={`w-1.5 h-1.5 rounded-full ${isReady ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'} inline-block`}></span>
+                {isReady ? 'Trained' : 'Untrained'}
               </span>
             </div>
             <p className="font-mono text-[11px]" style={S.textSecondary}>
-              {modelStatus.isTrained
+              {isReady
                 ? `Vocab: ${modelStatus.vocabularySize} | Rules: ${modelStatus.mergeRulesCount}`
-                : modelStatus.hasDataset ? 'Dataset ready — not trained' : 'No dataset uploaded'}
+                : modelStatus.hasDataset ? 'Dataset uploaded — not trained' : 'No dataset uploaded'}
             </p>
           </div>
         </div>
@@ -349,12 +364,12 @@ function App() {
               {navItems.find(i => i.id === currentPage)?.label || 'Dashboard'}
             </h2>
             <div className="h-4 w-px" style={{ background: 'var(--border-color)' }}></div>
-            <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${
-              modelStatus.isTrained
+            <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+              isReady
                 ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/40'
-                : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/40'
+                : modelStatus.hasDataset ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/40' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-700'
             }`}>
-              {modelStatus.isTrained ? 'Model Ready' : modelStatus.hasDataset ? 'Awaiting Training' : 'Upload Dataset First'}
+              {isReady ? 'Model Trained & Ready' : modelStatus.hasDataset ? 'Dataset Ready — Click Train' : 'Upload Dataset First'}
             </span>
           </div>
 
@@ -434,6 +449,8 @@ function GateState({ icon, title, message, buttonLabel, onAction }) {
 // 1. Dashboard View
 // -------------------------------------------------------------
 function DashboardView({ modelStatus, datasetInfo, onNavigate, theme }) {
+  const isReady = Boolean(modelStatus.isTrained && modelStatus.hasDataset);
+
   // Dark mode dot-grid texture for the banner
   const bannerStyle = theme === 'dark'
     ? {
@@ -463,8 +480,8 @@ function DashboardView({ modelStatus, datasetInfo, onNavigate, theme }) {
             Welcome to TokenForge
           </h2>
           <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-            TokenForge is a full-featured Byte-Pair Encoding (BPE) engine built in modern C++17.
-            Upload your training dataset, run BPE training, then explore vocabulary, merge rules, and tokenize any text — all powered by the C++ engine.
+            TokenForge is an interactive Byte-Pair Encoding (BPE) tokenizer built in modern C++17.
+            Upload your plain text training dataset (.txt) and run BPE training. All sections (Tokenize Text, Training Explorer, Encoding Explorer, Vocabulary, and Merge Rules) will unlock once your dataset is trained.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <button
@@ -473,9 +490,9 @@ function DashboardView({ modelStatus, datasetInfo, onNavigate, theme }) {
               style={{ background: 'var(--accent-primary)' }}
             >
               <Icon name="upload" className="w-4 h-4" />
-              {modelStatus.hasDataset ? 'Train Tokenizer' : 'Upload & Train'}
+              {modelStatus.hasDataset ? (isReady ? 'Re-Train Tokenizer' : 'Start Training') : 'Upload Dataset First'}
             </button>
-            {modelStatus.isTrained && (
+            {isReady && (
               <button
                 onClick={() => onNavigate('tokenize')}
                 className="px-5 py-2.5 rounded-xl font-medium text-sm transition flex items-center gap-2"
@@ -489,18 +506,22 @@ function DashboardView({ modelStatus, datasetInfo, onNavigate, theme }) {
         </div>
       </div>
 
-      {/* Upload CTA — shown when no dataset */}
-      {!modelStatus.hasDataset && (
+      {/* Upload & Train Required Banner */}
+      {!isReady && (
         <div className="p-5 rounded-2xl flex items-center gap-4" style={{ background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.25)' }}>
           <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(245,158,11,0.15)' }}>
-            <Icon name="upload" className="w-5 h-5" style={{ color: '#f59e0b' }} />
+            <Icon name={modelStatus.hasDataset ? 'play' : 'upload'} className="w-5 h-5" style={{ color: '#f59e0b' }} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>No dataset uploaded yet</p>
-            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Upload a .txt training corpus to begin BPE training.</p>
+            <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+              {modelStatus.hasDataset ? 'Dataset uploaded — training required' : 'No dataset uploaded yet'}
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+              {modelStatus.hasDataset ? 'Click "Start BPE Training" on the Train page to train the model and unlock tokenization.' : 'Upload a plain text (.txt) corpus and run training to unlock tokenization, vocabulary, and explorers.'}
+            </p>
           </div>
-          <button onClick={() => onNavigate('train')} className="px-4 py-2 rounded-lg text-sm font-medium text-white flex-shrink-0" style={{ background: '#d97706' }}>
-            Upload Now
+          <button onClick={() => onNavigate('train')} className="px-4 py-2 rounded-lg text-sm font-medium text-white flex-shrink-0 transition" style={{ background: '#d97706' }}>
+            {modelStatus.hasDataset ? 'Go to Train' : 'Upload Now'}
           </button>
         </div>
       )}
@@ -509,9 +530,9 @@ function DashboardView({ modelStatus, datasetInfo, onNavigate, theme }) {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
           { label: 'Base Byte Tokens', value: '256', note: 'Covers all byte values (0–255)', icon: 'database', color: '#8b5cf6' },
-          { label: 'Vocabulary Size', value: modelStatus.isTrained ? modelStatus.vocabularySize : '—', note: modelStatus.isTrained ? `${Math.max(0, modelStatus.vocabularySize - 256)} learned subwords` : 'Train to populate', icon: 'vocabulary', color: '#6366f1' },
-          { label: 'Merge Rules', value: modelStatus.isTrained ? modelStatus.mergeRulesCount : '—', note: modelStatus.isTrained ? 'Recorded BPE merges' : 'Train to populate', icon: 'mergeRules', color: '#10b981' },
-          { label: 'Dataset', value: datasetInfo ? `${datasetInfo.totalLines} lines` : '—', note: datasetInfo ? datasetInfo.filename : 'No dataset uploaded', icon: 'fileText', color: '#f59e0b' },
+          { label: 'Vocabulary Size', value: isReady ? modelStatus.vocabularySize : '—', note: isReady ? `${Math.max(0, modelStatus.vocabularySize - 256)} learned subwords` : 'Train to unlock', icon: 'vocabulary', color: '#6366f1' },
+          { label: 'Merge Rules', value: isReady ? modelStatus.mergeRulesCount : '—', note: isReady ? 'Recorded BPE merges' : 'Train to unlock', icon: 'mergeRules', color: '#10b981' },
+          { label: 'Active Dataset', value: datasetInfo ? `${datasetInfo.totalLines} lines` : '—', note: datasetInfo ? datasetInfo.filename : 'Upload required', icon: 'fileText', color: '#f59e0b' },
         ].map((m) => (
           <div key={m.label} className="p-5 rounded-xl shadow-sm" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-color)' }}>
             <div className="flex items-center justify-between text-xs font-medium mb-2" style={{ color: 'var(--text-muted)' }}>
@@ -527,8 +548,8 @@ function DashboardView({ modelStatus, datasetInfo, onNavigate, theme }) {
       {/* Quick Access Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {[
-          { id: 'explorer', label: 'Training Explorer', desc: 'Step through BPE training iterations. See which pairs are merged at each step.', color: '#8b5cf6', iconColor: 'rgba(139,92,246,0.12)', icon: 'explorer' },
-          { id: 'encodingExplorer', label: 'Encoding Explorer', desc: 'Trace how input text is split into bytes and merged step-by-step into subword tokens.', color: '#6366f1', iconColor: 'rgba(99,102,241,0.12)', icon: 'encodingExplorer' },
+          { id: 'tokenize', label: 'Tokenize Text', desc: 'Enter any text to see subwords, token IDs, and 100% exact reconstruction.', color: '#8b5cf6', iconColor: 'rgba(139,92,246,0.12)', icon: 'tokenize' },
+          { id: 'explorer', label: 'Training Explorer', desc: 'Step through BPE training iterations. See which pairs are merged at each step.', color: '#6366f1', iconColor: 'rgba(99,102,241,0.12)', icon: 'explorer' },
           { id: 'vocabulary', label: 'Vocabulary Table', desc: 'Search, filter, and explore all learned tokens and their numeric IDs.', color: '#10b981', iconColor: 'rgba(16,185,129,0.12)', icon: 'vocabulary' },
         ].map((item) => (
           <div
@@ -541,8 +562,15 @@ function DashboardView({ modelStatus, datasetInfo, onNavigate, theme }) {
               <Icon name={item.icon} className="w-5 h-5" style={{ color: item.color }} />
             </div>
             <h3 className="text-base font-semibold flex items-center justify-between" style={{ color: 'var(--text-primary)' }}>
-              {item.label}
-              <Icon name="arrowRight" className="w-4 h-4 transition group-hover:translate-x-1" style={{ color: 'var(--text-muted)' }} />
+              <span>{item.label}</span>
+              <div className="flex items-center gap-1.5">
+                {!isReady && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded font-mono flex items-center gap-1" style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)' }}>
+                    <Icon name="lock" className="w-3 h-3" /> Locked
+                  </span>
+                )}
+                <Icon name="arrowRight" className="w-4 h-4 transition group-hover:translate-x-1" style={{ color: 'var(--text-muted)' }} />
+              </div>
             </h3>
             <p className="mt-2 text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>{item.desc}</p>
           </div>
@@ -776,7 +804,8 @@ function TrainView({ modelStatus, datasetInfo, onTrainingComplete, onNavigate })
 // 3. Tokenize Text View
 // -------------------------------------------------------------
 function TokenizeView({ modelStatus, onNavigate }) {
-  const [inputText, setInputText] = useState('machine learning');
+  const isReady = Boolean(modelStatus.isTrained && modelStatus.hasDataset);
+  const [inputText, setInputText] = useState('');
   const [tokenizing, setTokenizing] = useState(false);
   const [output, setOutput] = useState(null);
   const [error, setError] = useState(null);
@@ -795,17 +824,13 @@ function TokenizeView({ modelStatus, onNavigate }) {
     }
   };
 
-  useEffect(() => {
-    if (modelStatus.isTrained) handleTokenize();
-  }, [modelStatus.isTrained]);
-
-  if (!modelStatus.isTrained) {
+  if (!isReady) {
     return (
       <GateState
         icon="alertCircle"
-        title="Model Not Yet Trained"
-        message="Upload a dataset and train your BPE tokenizer before tokenizing text."
-        buttonLabel="Go to Train Tokenizer"
+        title="Training Required to Tokenize"
+        message="Tokenize Text is locked. Please upload a plain text training dataset (.txt) and run BPE training before you can tokenize text."
+        buttonLabel="Upload & Train Dataset"
         onAction={() => onNavigate('train')}
       />
     );
@@ -946,12 +971,14 @@ function TokenizeView({ modelStatus, onNavigate }) {
 // 4. Training Explorer View
 // -------------------------------------------------------------
 function TrainingExplorerView({ modelStatus, onNavigate }) {
+  const isReady = Boolean(modelStatus.isTrained && modelStatus.hasDataset);
   const [historyData, setHistoryData] = useState(null);
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const loadHistory = async () => {
+    if (!isReady) return;
     setLoading(true);
     try {
       const data = await api.get('/api/train/history');
@@ -964,7 +991,9 @@ function TrainingExplorerView({ modelStatus, onNavigate }) {
     }
   };
 
-  useEffect(() => { loadHistory(); }, [modelStatus.isTrained, modelStatus.vocabularySize]);
+  useEffect(() => {
+    if (isReady) loadHistory();
+  }, [isReady]);
 
   useEffect(() => {
     let timer;
@@ -978,6 +1007,18 @@ function TrainingExplorerView({ modelStatus, onNavigate }) {
     }
     return () => clearInterval(timer);
   }, [isPlaying, historyData]);
+
+  if (!isReady) {
+    return (
+      <GateState
+        icon="alertCircle"
+        title="Training Required for Explorer"
+        message="Training Explorer is locked. Please upload a plain text dataset (.txt) and run BPE training before you can visualize training iterations."
+        buttonLabel="Upload & Train Dataset"
+        onAction={() => onNavigate('train')}
+      />
+    );
+  }
 
   if (loading) {
     return (
@@ -1147,7 +1188,8 @@ function TrainingExplorerView({ modelStatus, onNavigate }) {
 // 5. Encoding Explorer View
 // -------------------------------------------------------------
 function EncodingExplorerView({ modelStatus, onNavigate }) {
-  const [inputText, setInputText] = useState('learning');
+  const isReady = Boolean(modelStatus.isTrained && modelStatus.hasDataset);
+  const [inputText, setInputText] = useState('');
   const [traceData, setTraceData] = useState(null);
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -1168,8 +1210,6 @@ function EncodingExplorerView({ modelStatus, onNavigate }) {
     }
   };
 
-  useEffect(() => { if (modelStatus.isTrained) runTrace(); }, [modelStatus.isTrained]);
-
   useEffect(() => {
     let timer;
     if (isPlaying && traceData?.steps?.length) {
@@ -1183,13 +1223,13 @@ function EncodingExplorerView({ modelStatus, onNavigate }) {
     return () => clearInterval(timer);
   }, [isPlaying, traceData]);
 
-  if (!modelStatus.isTrained) {
+  if (!isReady) {
     return (
       <GateState
         icon="alertCircle"
-        title="Model Not Yet Trained"
-        message="Train your tokenizer to visualize encoding steps."
-        buttonLabel="Go to Train"
+        title="Training Required to Trace Encoding"
+        message="Encoding Explorer is locked. Please upload a plain text dataset (.txt) and run BPE training before you can trace text encoding."
+        buttonLabel="Upload & Train Dataset"
         onAction={() => onNavigate('train')}
       />
     );
@@ -1298,6 +1338,7 @@ function EncodingExplorerView({ modelStatus, onNavigate }) {
 // 6. Vocabulary View
 // -------------------------------------------------------------
 function VocabularyView({ modelStatus, onNavigate }) {
+  const isReady = Boolean(modelStatus.isTrained && modelStatus.hasDataset);
   const [vocabData, setVocabData] = useState(null);
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('all');
@@ -1311,11 +1352,19 @@ function VocabularyView({ modelStatus, onNavigate }) {
         setVocabData(res);
       } catch (err) { console.error(err); }
     }
-    if (modelStatus.isTrained) loadVocab();
-  }, [modelStatus.isTrained]);
+    if (isReady) loadVocab();
+  }, [isReady]);
 
-  if (!modelStatus.isTrained) {
-    return <GateState icon="alertCircle" title="No Vocabulary Available" message="Train a tokenizer to explore the vocabulary." buttonLabel="Train Tokenizer" onAction={() => onNavigate('train')} />;
+  if (!isReady) {
+    return (
+      <GateState
+        icon="alertCircle"
+        title="Vocabulary Locked"
+        message="Vocabulary Table is locked. Please upload a plain text dataset (.txt) and train the tokenizer to generate and inspect the vocabulary."
+        buttonLabel="Upload & Train Dataset"
+        onAction={() => onNavigate('train')}
+      />
+    );
   }
 
   const allTokens = vocabData?.tokens || [];
@@ -1419,6 +1468,7 @@ function VocabularyView({ modelStatus, onNavigate }) {
 // 7. Merge Rules View
 // -------------------------------------------------------------
 function MergeRulesView({ modelStatus, onNavigate }) {
+  const isReady = Boolean(modelStatus.isTrained && modelStatus.hasDataset);
   const [mergesData, setMergesData] = useState(null);
   const [search, setSearch] = useState('');
 
@@ -1426,11 +1476,19 @@ function MergeRulesView({ modelStatus, onNavigate }) {
     async function loadMerges() {
       try { const res = await api.get('/api/merges'); setMergesData(res); } catch (err) { console.error(err); }
     }
-    if (modelStatus.isTrained) loadMerges();
-  }, [modelStatus.isTrained]);
+    if (isReady) loadMerges();
+  }, [isReady]);
 
-  if (!modelStatus.isTrained) {
-    return <GateState icon="alertCircle" title="No Merge Rules Available" message="Train a tokenizer to view the learned BPE merge operations." buttonLabel="Train Tokenizer" onAction={() => onNavigate('train')} />;
+  if (!isReady) {
+    return (
+      <GateState
+        icon="alertCircle"
+        title="Merge Rules Locked"
+        message="Merge Rules ledger is locked. Please upload a plain text dataset (.txt) and train the tokenizer to view learned BPE merge operations."
+        buttonLabel="Upload & Train Dataset"
+        onAction={() => onNavigate('train')}
+      />
+    );
   }
 
   const rules = mergesData?.rules || [];
@@ -1504,6 +1562,7 @@ function MergeRulesView({ modelStatus, onNavigate }) {
 // 8. Settings View
 // -------------------------------------------------------------
 function SettingsView({ modelStatus, theme, setTheme, onReset }) {
+  const isReady = Boolean(modelStatus.isTrained && modelStatus.hasDataset);
   const [resetting, setResetting] = useState(false);
   const [resetMessage, setResetMessage] = useState(null);
 
@@ -1558,21 +1617,21 @@ function SettingsView({ modelStatus, theme, setTheme, onReset }) {
       <div className="p-6 rounded-2xl shadow-sm space-y-4" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-color)' }}>
         <h3 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>Model Status</h3>
         <div className="text-xs space-y-2 font-mono" style={{ color: 'var(--text-secondary)' }}>
-          <p>• Status: <span className="font-bold" style={{ color: modelStatus.isTrained ? '#10b981' : '#f59e0b' }}>{modelStatus.isTrained ? 'Trained' : 'Not trained'}</span></p>
+          <p>• Status: <span className="font-bold" style={{ color: isReady ? '#10b981' : '#f59e0b' }}>{isReady ? 'Trained & Active' : 'Not Trained'}</span></p>
           {modelStatus.activeDatasetName && (
             <p>• Dataset: <span className="font-bold" style={{ color: 'var(--text-primary)' }}>{modelStatus.activeDatasetName}</span>
               {modelStatus.activeDatasetLines > 0 && <span style={{ color: 'var(--text-muted)' }}> ({modelStatus.activeDatasetLines} lines)</span>}
             </p>
           )}
-          <p>• Vocabulary Size: <span className="font-bold" style={{ color: 'var(--text-primary)' }}>{modelStatus.vocabularySize} tokens</span></p>
-          <p>• Merge Rules: <span className="font-bold" style={{ color: 'var(--text-primary)' }}>{modelStatus.mergeRulesCount} rules</span></p>
+          <p>• Vocabulary Size: <span className="font-bold" style={{ color: 'var(--text-primary)' }}>{isReady ? `${modelStatus.vocabularySize} tokens` : '—'}</span></p>
+          <p>• Merge Rules: <span className="font-bold" style={{ color: 'var(--text-primary)' }}>{isReady ? `${modelStatus.mergeRulesCount} rules` : '—'}</span></p>
         </div>
         <div className="pt-2">
           <button
             onClick={handleReset}
-            disabled={resetting || !modelStatus.isTrained}
+            disabled={resetting || !isReady}
             className="px-4 py-2 rounded-xl text-xs font-semibold transition"
-            style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', opacity: !modelStatus.isTrained ? 0.4 : 1 }}
+            style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', opacity: !isReady ? 0.4 : 1 }}
           >
             {resetting ? 'Resetting…' : 'Reset Trained Model'}
           </button>

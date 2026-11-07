@@ -34,6 +34,14 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 MODELS_DIR.mkdir(parents=True, exist_ok=True)
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
+# Clean any leftover model weights on server start so state starts completely fresh
+for stale_file in [MODELS_DIR / "vocab.txt", MODELS_DIR / "merges.txt"]:
+    if stale_file.exists():
+        try:
+            stale_file.unlink()
+        except Exception:
+            pass
+
 app = FastAPI(title="TokenForge API", version="1.0.0")
 
 app.add_middleware(
@@ -110,12 +118,20 @@ CURRENT_STATE = {
     "initialCorpus": []
 }
 
-def sync_model_status():
+def is_model_ready() -> bool:
+    """A model is ONLY ready if a dataset was uploaded AND trained in this session."""
     vocab_file = MODELS_DIR / "vocab.txt"
     merges_file = MODELS_DIR / "merges.txt"
-    if vocab_file.exists() and merges_file.exists() and vocab_file.stat().st_size > 0:
-        CURRENT_STATE["isTrained"] = True
-    else:
+    return bool(
+        CURRENT_STATE.get("activeDatasetPath")
+        and CURRENT_STATE.get("isTrained")
+        and vocab_file.exists()
+        and merges_file.exists()
+        and vocab_file.stat().st_size > 0
+    )
+
+def sync_model_status():
+    if not is_model_ready():
         CURRENT_STATE["isTrained"] = False
 
 sync_model_status()
@@ -152,11 +168,17 @@ async def upload_dataset(file: UploadFile = File(...)):
     CURRENT_STATE["activeDatasetName"] = file.filename
     CURRENT_STATE["activeDatasetLines"] = len(lines)
     CURRENT_STATE["activeDatasetSize"] = len(content_bytes)
-    # Reset training state when new dataset is uploaded
+    # Uploading a dataset resets previous training state — user must click Train
     CURRENT_STATE["isTrained"] = False
     CURRENT_STATE["lastTrainingStats"] = None
     CURRENT_STATE["trainingHistory"] = []
     CURRENT_STATE["initialCorpus"] = []
+
+    # Clean previous model files
+    for f in [MODELS_DIR / "vocab.txt", MODELS_DIR / "merges.txt"]:
+        if f.exists():
+            try: f.unlink()
+            except Exception: pass
 
     return {
         "status": "success",
@@ -238,9 +260,15 @@ async def get_training_status():
         "stats": CURRENT_STATE["lastTrainingStats"]
     }
 
-# 5. Training History — only return if already trained, never auto-retrain
+# 5. Training History — only return if trained with an active dataset
 @app.get("/api/train/history")
 async def get_training_history():
+    if not is_model_ready():
+        return {
+            "initialCorpus": [],
+            "history": [],
+            "totalSteps": 0
+        }
     return {
         "initialCorpus": CURRENT_STATE.get("initialCorpus", []),
         "history": CURRENT_STATE["trainingHistory"],
@@ -250,6 +278,11 @@ async def get_training_history():
 # 6. Retrieve Vocabulary
 @app.get("/api/vocabulary")
 async def get_vocabulary():
+    if not is_model_ready():
+        raise HTTPException(
+            status_code=400,
+            detail="No trained vocabulary found. Please upload a dataset and train the model first."
+        )
     vocab_file = str(MODELS_DIR / "vocab.txt")
     if not Path(vocab_file).exists():
         raise HTTPException(status_code=400, detail="No trained vocabulary found. Please train the model first.")
@@ -258,6 +291,11 @@ async def get_vocabulary():
 # 7. Retrieve Merge Rules
 @app.get("/api/merges")
 async def get_merge_rules():
+    if not is_model_ready():
+        raise HTTPException(
+            status_code=400,
+            detail="No merge rules found. Please upload a dataset and train the model first."
+        )
     merges_file = str(MODELS_DIR / "merges.txt")
     if not Path(merges_file).exists():
         raise HTTPException(status_code=400, detail="No merge rules found. Please train the model first.")
@@ -266,6 +304,11 @@ async def get_merge_rules():
 # 8. Tokenize / Encode Text
 @app.post("/api/tokenize")
 async def tokenize_text(req: TokenizeRequest):
+    if not is_model_ready():
+        raise HTTPException(
+            status_code=400,
+            detail="Tokenizer is not trained. Please upload a dataset and train the tokenizer first."
+        )
     if not req.text:
         raise HTTPException(status_code=400, detail="Text cannot be empty.")
 
@@ -280,6 +323,11 @@ async def tokenize_text(req: TokenizeRequest):
 # 9. Decode Token IDs
 @app.post("/api/decode")
 async def decode_token_ids(req: DecodeRequest):
+    if not is_model_ready():
+        raise HTTPException(
+            status_code=400,
+            detail="Tokenizer is not trained. Please upload a dataset and train the tokenizer first."
+        )
     if not req.tokenIds:
         return {"decoded": "", "count": 0}
 
@@ -293,22 +341,23 @@ async def decode_token_ids(req: DecodeRequest):
 @app.get("/api/model/status")
 async def get_model_status():
     sync_model_status()
+    ready = is_model_ready()
     vocab_file = MODELS_DIR / "vocab.txt"
     merges_file = MODELS_DIR / "merges.txt"
 
     vocab_size = 0
     merge_count = 0
 
-    if vocab_file.exists():
+    if ready and vocab_file.exists():
         with open(vocab_file, "r", encoding="utf-8", errors="replace") as f:
             vocab_size = sum(1 for line in f if line.strip() and not line.startswith("#"))
 
-    if merges_file.exists():
+    if ready and merges_file.exists():
         with open(merges_file, "r", encoding="utf-8", errors="replace") as f:
             merge_count = sum(1 for line in f if line.strip() and not line.startswith("#"))
 
     return {
-        "isTrained": CURRENT_STATE["isTrained"],
+        "isTrained": ready,
         "hasDataset": CURRENT_STATE["activeDatasetPath"] is not None,
         "vocabularySize": vocab_size,
         "mergeRulesCount": merge_count,
