@@ -1,4 +1,0 @@
-C:/final_year/temp project/ai course/project3/TokenForge/build/CMakeFiles/TokenForge.dir
-C:/final_year/temp project/ai course/project3/TokenForge/build/CMakeFiles/tokenforge_api.dir
-C:/final_year/temp project/ai course/project3/TokenForge/build/CMakeFiles/edit_cache.dir
-C:/final_year/temp project/ai course/project3/TokenForge/build/CMakeFiles/rebuild_cache.dir

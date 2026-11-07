@@ -12,11 +12,18 @@ from pydantic import BaseModel
 BASE_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = BASE_DIR
 BUILD_DIR = PROJECT_DIR / "build"
-CLI_EXE = BUILD_DIR / ("tokenforge_api.exe" if os.name == "nt" else "tokenforge_api")
-if not CLI_EXE.exists():
-    alt = BUILD_DIR / ("tokenforge_api" if os.name == "nt" else "tokenforge_api.exe")
-    if alt.exists():
-        CLI_EXE = alt
+
+def get_cli_exe() -> Optional[Path]:
+    """Dynamically resolve the C++ API binary for Windows or Linux."""
+    candidates = [
+        BUILD_DIR / ("tokenforge_api.exe" if os.name == "nt" else "tokenforge_api"),
+        BUILD_DIR / "tokenforge_api",
+        BUILD_DIR / "tokenforge_api.exe"
+    ]
+    for c in candidates:
+        if c.exists():
+            return c
+    return None
 
 MODELS_DIR = PROJECT_DIR / "models"
 DATA_DIR = PROJECT_DIR / "data"
@@ -38,12 +45,13 @@ app.add_middleware(
 )
 
 def run_cpp_cli(*args) -> dict:
-    if not CLI_EXE.exists():
+    cli_exe = get_cli_exe()
+    if not cli_exe:
         raise HTTPException(
             status_code=500,
-            detail="TokenForge engine is not built. Please build the C++ project first."
+            detail="TokenForge engine binary not found. Please build the C++ project with 'cmake --build build' first."
         )
-    cmd = [str(CLI_EXE)] + list(args)
+    cmd = [str(cli_exe)] + list(args)
     try:
         proc = subprocess.run(
             cmd,
