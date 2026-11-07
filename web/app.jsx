@@ -263,6 +263,44 @@ function App() {
 
   useEffect(() => { refreshStatus(); }, []);
 
+  // -----------------------------------------------------------
+  // Ephemeral Session Storage Management:
+  // - Files stay valid as long as the user is present on the site.
+  // - Once the user leaves the site (tab/browser close), everything is deleted.
+  // - On initial new tab/session entry, clean any prior abandoned storage.
+  // -----------------------------------------------------------
+  useEffect(() => {
+    const isSessionActive = sessionStorage.getItem('tf_session_active');
+    if (!isSessionActive) {
+      // Fresh site visit: clean up any stale files from previous abandoned sessions
+      fetch('/api/session/cleanup', { method: 'POST', keepalive: true })
+        .then(() => {
+          sessionStorage.setItem('tf_session_active', '1');
+          refreshStatus();
+        })
+        .catch(() => {});
+    }
+
+    // When user leaves the site (tab close, browser exit, navigation away)
+    const handleLeave = () => {
+      try { sessionStorage.removeItem('tf_session_active'); } catch (e) {}
+
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon('/api/session/cleanup');
+      } else {
+        fetch('/api/session/cleanup', { method: 'POST', keepalive: true }).catch(() => {});
+      }
+    };
+
+    window.addEventListener('pagehide', handleLeave);
+    window.addEventListener('beforeunload', handleLeave);
+
+    return () => {
+      window.removeEventListener('pagehide', handleLeave);
+      window.removeEventListener('beforeunload', handleLeave);
+    };
+  }, []);
+
   const isReady = Boolean(modelStatus.isTrained && modelStatus.hasDataset);
 
   const navItems = [
@@ -1615,7 +1653,10 @@ function SettingsView({ modelStatus, theme, setTheme, onReset }) {
 
       {/* Model Management */}
       <div className="p-6 rounded-2xl shadow-sm space-y-4" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-color)' }}>
-        <h3 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>Model Status</h3>
+        <h3 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>Session & Storage</h3>
+        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+          TokenForge uses privacy-first ephemeral storage: your uploaded training data and learned model weights stay active only while you are present on the site. Once you leave or close the tab, all inputs and files are automatically removed.
+        </p>
         <div className="text-xs space-y-2 font-mono" style={{ color: 'var(--text-secondary)' }}>
           <p>• Status: <span className="font-bold" style={{ color: isReady ? '#10b981' : '#f59e0b' }}>{isReady ? 'Trained & Active' : 'Not Trained'}</span></p>
           {modelStatus.activeDatasetName && (
@@ -1633,7 +1674,7 @@ function SettingsView({ modelStatus, theme, setTheme, onReset }) {
             className="px-4 py-2 rounded-xl text-xs font-semibold transition"
             style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', opacity: !isReady ? 0.4 : 1 }}
           >
-            {resetting ? 'Resetting…' : 'Reset Trained Model'}
+            {resetting ? 'Resetting…' : 'Clear Session & Remove Files'}
           </button>
           {resetMessage && <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>{resetMessage}</p>}
         </div>

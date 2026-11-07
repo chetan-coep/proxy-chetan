@@ -34,13 +34,43 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 MODELS_DIR.mkdir(parents=True, exist_ok=True)
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-# Clean any leftover model weights on server start so state starts completely fresh
-for stale_file in [MODELS_DIR / "vocab.txt", MODELS_DIR / "merges.txt"]:
-    if stale_file.exists():
-        try:
-            stale_file.unlink()
-        except Exception:
-            pass
+# In-memory session state — no default dataset; user must upload
+CURRENT_STATE = {
+    "activeDatasetPath": None,
+    "activeDatasetName": None,
+    "activeDatasetLines": 0,
+    "activeDatasetSize": 0,
+    "isTrained": False,
+    "lastTrainingStats": None,
+    "trainingHistory": [],
+    "initialCorpus": []
+}
+
+def cleanup_all_storage():
+    """Wipes all uploaded files and trained model files, resetting in-memory session."""
+    if UPLOAD_DIR.exists():
+        for f in UPLOAD_DIR.iterdir():
+            if f.is_file() and f.name != ".gitkeep":
+                try: f.unlink()
+                except Exception: pass
+
+    if MODELS_DIR.exists():
+        for f in MODELS_DIR.iterdir():
+            if f.is_file() and f.name != ".gitkeep":
+                try: f.unlink()
+                except Exception: pass
+
+    CURRENT_STATE["activeDatasetPath"] = None
+    CURRENT_STATE["activeDatasetName"] = None
+    CURRENT_STATE["activeDatasetLines"] = 0
+    CURRENT_STATE["activeDatasetSize"] = 0
+    CURRENT_STATE["isTrained"] = False
+    CURRENT_STATE["lastTrainingStats"] = None
+    CURRENT_STATE["trainingHistory"] = []
+    CURRENT_STATE["initialCorpus"] = []
+
+# Clean any leftover files on cold boot
+cleanup_all_storage()
 
 app = FastAPI(title="TokenForge API", version="1.0.0")
 
@@ -105,18 +135,6 @@ class TokenizeRequest(BaseModel):
 
 class DecodeRequest(BaseModel):
     tokenIds: List[int]
-
-# In-memory session state — no default dataset; user must upload
-CURRENT_STATE = {
-    "activeDatasetPath": None,
-    "activeDatasetName": None,
-    "activeDatasetLines": 0,
-    "activeDatasetSize": 0,
-    "isTrained": False,
-    "lastTrainingStats": None,
-    "trainingHistory": [],
-    "initialCorpus": []
-}
 
 def is_model_ready() -> bool:
     """A model is ONLY ready if a dataset was uploaded AND trained in this session."""
@@ -365,23 +383,17 @@ async def get_model_status():
         "activeDatasetLines": CURRENT_STATE["activeDatasetLines"]
     }
 
-# 11. Reset Model
+# 11. Session Cleanup when user leaves the site (sendBeacon or unload)
+@app.post("/api/session/cleanup")
+async def session_cleanup():
+    cleanup_all_storage()
+    return {"status": "success", "message": "All session inputs, uploads, and model files removed."}
+
+# 12. Reset Model
 @app.post("/api/model/reset")
 async def reset_model():
-    vocab_file = MODELS_DIR / "vocab.txt"
-    merges_file = MODELS_DIR / "merges.txt"
-
-    if vocab_file.exists():
-        vocab_file.unlink()
-    if merges_file.exists():
-        merges_file.unlink()
-
-    CURRENT_STATE["isTrained"] = False
-    CURRENT_STATE["lastTrainingStats"] = None
-    CURRENT_STATE["trainingHistory"] = []
-    CURRENT_STATE["initialCorpus"] = []
-
-    return {"status": "success", "message": "Model has been reset."}
+    cleanup_all_storage()
+    return {"status": "success", "message": "Model and uploaded files have been reset."}
 
 # Serve Frontend static assets if available
 assets_dir = WEB_DIR / "assets"
