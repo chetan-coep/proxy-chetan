@@ -1,0 +1,14 @@
+{
+  "name": "tokenforge-demo",
+  "version": "1.0.0",
+  "description": "Automated demo and recording for TokenForge",
+  "main": "demo.js",
+  "scripts": {
+    "start": "node demo.js",
+    "demo": "node demo.js"
+  },
+  "dependencies": {
+    "playwright": "^1.50.0"
+  }
+}
+

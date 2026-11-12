@@ -1,0 +1,14 @@
+Tokenization is the process of converting text into smaller units called tokens.
+
+Natural language processing uses tokenization to prepare text for machine learning models.
+
+Byte pair encoding is a subword tokenization algorithm that repeatedly merges the most frequent adjacent token pairs.
+
+Language models learn patterns from text using tokens and their numerical representations.
+
+The tokenizer should support words, punctuation, whitespace, numbers, programming languages and special characters.
+
+Byte pair encoding builds a vocabulary by learning frequent combinations from a training dataset.
+
+A good tokenizer should preserve the original text during encoding and decoding.
+

@@ -21,6 +21,10 @@ uploads/*
 models/*
 !models/.gitkeep
 
+# Node artifacts
+node_modules/
+demo/node_modules/
+
 # OS generated files
 .DS_Store
 Thumbs.db
