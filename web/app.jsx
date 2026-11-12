@@ -176,45 +176,26 @@ const api = {
 };
 
 // -------------------------------------------------------------
-// Theme CSS variables injected into <head>
+// Unified Green + Beige Single Theme (Comfortable Mid-Tone)
 // -------------------------------------------------------------
-const lightThemeCSS = `
+const themeCSS = `
   :root {
-    --bg-base: #f0ebe4;
-    --bg-surface: #faf6f1;
-    --bg-elevated: #fff9f4;
-    --border-color: #e2d9cf;
-    --border-subtle: #ede5dc;
-    --text-primary: #2a2118;
-    --text-secondary: #5c4f42;
-    --text-muted: #9e8e80;
-    --accent-primary: #7c5cbf;
-    --accent-soft: #ede8f8;
-    --sidebar-bg: #faf6f1;
-    --header-bg: rgba(250,246,241,0.85);
-    --input-bg: #fff9f4;
-    --code-bg: #2d2521;
-    --code-text: #e8ddd5;
-  }
-`;
-
-const darkThemeCSS = `
-  :root {
-    --bg-base: #0f1117;
-    --bg-surface: #161b27;
-    --bg-elevated: #1e2535;
-    --border-color: #2a3348;
-    --border-subtle: #222a3a;
-    --text-primary: #e8eaf2;
-    --text-secondary: #9ca3b8;
-    --text-muted: #5a6480;
-    --accent-primary: #8b5cf6;
-    --accent-soft: #1e1535;
-    --sidebar-bg: #111622;
-    --header-bg: rgba(17,22,34,0.85);
-    --input-bg: #1a2030;
-    --code-bg: #0a0d14;
-    --code-text: #c9d1e8;
+    --bg-base: #ded8cc;
+    --bg-surface: #e8e3d7;
+    --bg-elevated: #f1ede4;
+    --border-color: #bfb8a6;
+    --border-subtle: #d0c9bb;
+    --text-primary: #1b281f;
+    --text-secondary: #3f4e43;
+    --text-muted: #69776b;
+    --accent-primary: #2d6a4f;
+    --accent-hover: #22533d;
+    --accent-soft: #d3dfd3;
+    --sidebar-bg: #e3ddd1;
+    --header-bg: rgba(227, 221, 209, 0.92);
+    --input-bg: #f3efe6;
+    --code-bg: #1a261d;
+    --code-text: #d9e8db;
   }
 `;
 
@@ -223,29 +204,23 @@ const darkThemeCSS = `
 // -------------------------------------------------------------
 function App() {
   const [currentPage, setCurrentPage] = useState('dashboard');
-  const [theme, setTheme] = useState(() => localStorage.getItem('tf_theme') || 'dark');
   const [modelStatus, setModelStatus] = useState({ isTrained: false, hasDataset: false, vocabularySize: 0, mergeRulesCount: 0 });
   const [datasetInfo, setDatasetInfo] = useState(null);
 
-  // Apply Theme — inject CSS vars + dark class
+  // Apply Single Theme — inject CSS vars & remove any dark class
   useEffect(() => {
     const root = document.documentElement;
-    // Remove any existing theme style
+    root.classList.remove('dark');
+    try { localStorage.removeItem('tf_theme'); } catch (e) {}
+
     let styleEl = document.getElementById('tf-theme-vars');
     if (!styleEl) {
       styleEl = document.createElement('style');
       styleEl.id = 'tf-theme-vars';
       document.head.appendChild(styleEl);
     }
-    if (theme === 'dark') {
-      root.classList.add('dark');
-      styleEl.textContent = darkThemeCSS;
-    } else {
-      root.classList.remove('dark');
-      styleEl.textContent = lightThemeCSS;
-    }
-    localStorage.setItem('tf_theme', theme);
-  }, [theme]);
+    styleEl.textContent = themeCSS;
+  }, []);
 
   // Load Model & Dataset Status
   const refreshStatus = async () => {
@@ -333,7 +308,7 @@ function App() {
       <aside className="w-64 flex-shrink-0 flex flex-col" style={S.sidebar}>
         {/* Brand */}
         <div className="h-16 flex items-center gap-3 px-5" style={{ borderBottom: '1px solid var(--border-color)' }}>
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-500 flex items-center justify-center text-white shadow-md">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-md" style={{ background: 'linear-gradient(135deg, #2d6a4f, #40916c)' }}>
             <Icon name="cpu" className="w-5 h-5" />
           </div>
           <div>
@@ -404,29 +379,25 @@ function App() {
             <div className="h-4 w-px" style={{ background: 'var(--border-color)' }}></div>
             <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${
               isReady
-                ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/40'
-                : modelStatus.hasDataset ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/40' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-700'
+                ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                : modelStatus.hasDataset ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-stone-200 text-stone-700 border-stone-300'
             }`}>
               {isReady ? 'Model Trained & Ready' : modelStatus.hasDataset ? 'Dataset Ready — Click Train' : 'Upload Dataset First'}
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="p-2 rounded-lg transition"
-              style={{ border: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}
-              title="Toggle Light/Dark Theme"
-            >
-              <Icon name={theme === 'dark' ? 'sun' : 'moon'} className="w-4 h-4" />
-            </button>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium shadow-sm" style={{ background: 'var(--accent-soft)', color: 'var(--accent-primary)', border: '1px solid var(--border-subtle)' }}>
+              <span className="w-2 h-2 rounded-full inline-block" style={{ background: 'var(--accent-primary)' }}></span>
+              Forest Sage & Beige
+            </span>
           </div>
         </header>
 
         {/* Page Content Viewport */}
         <main className="flex-1 overflow-y-auto p-6 max-w-7xl w-full mx-auto">
           {currentPage === 'dashboard' && (
-            <DashboardView modelStatus={modelStatus} datasetInfo={datasetInfo} onNavigate={setCurrentPage} theme={theme} />
+            <DashboardView modelStatus={modelStatus} datasetInfo={datasetInfo} onNavigate={setCurrentPage} />
           )}
           {currentPage === 'train' && (
             <TrainView modelStatus={modelStatus} datasetInfo={datasetInfo} onTrainingComplete={refreshStatus} onNavigate={setCurrentPage} />
@@ -447,7 +418,7 @@ function App() {
             <MergeRulesView modelStatus={modelStatus} onNavigate={setCurrentPage} />
           )}
           {currentPage === 'settings' && (
-            <SettingsView modelStatus={modelStatus} theme={theme} setTheme={setTheme} onReset={refreshStatus} />
+            <SettingsView modelStatus={modelStatus} onReset={refreshStatus} />
           )}
         </main>
       </div>
@@ -486,24 +457,18 @@ function GateState({ icon, title, message, buttonLabel, onAction }) {
 // -------------------------------------------------------------
 // 1. Dashboard View
 // -------------------------------------------------------------
-function DashboardView({ modelStatus, datasetInfo, onNavigate, theme }) {
+function DashboardView({ modelStatus, datasetInfo, onNavigate }) {
   const isReady = Boolean(modelStatus.isTrained && modelStatus.hasDataset);
 
-  // Dark mode dot-grid texture for the banner
-  const bannerStyle = theme === 'dark'
-    ? {
-        background: 'linear-gradient(135deg, #1a0f2e 0%, #0f1a2e 50%, #0f1117 100%)',
-        backgroundImage: `
-          radial-gradient(circle, rgba(139,92,246,0.18) 1px, transparent 1px),
-          linear-gradient(135deg, rgba(139,92,246,0.08) 0%, rgba(79,142,246,0.06) 50%, transparent 100%)
-        `,
-        backgroundSize: '24px 24px, 100% 100%',
-        border: '1px solid rgba(139,92,246,0.2)',
-      }
-    : {
-        background: 'linear-gradient(135deg, #f5ede8 0%, #ede8f8 60%, #e8f0f8 100%)',
-        border: '1px solid var(--border-subtle)',
-      };
+  const bannerStyle = {
+    background: 'linear-gradient(135deg, #e4ded2 0%, #ded7c9 50%, #d5dfd5 100%)',
+    backgroundImage: `
+      radial-gradient(circle, rgba(45,106,79,0.12) 1px, transparent 1px),
+      linear-gradient(135deg, rgba(45,106,79,0.06) 0%, rgba(213,223,213,0.35) 100%)
+    `,
+    backgroundSize: '24px 24px, 100% 100%',
+    border: '1px solid var(--border-color)',
+  };
 
   return (
     <div className="space-y-6">
@@ -1061,7 +1026,7 @@ function TrainingExplorerView({ modelStatus, onNavigate }) {
   if (loading) {
     return (
       <div className="py-20 text-center">
-        <span className="w-8 h-8 border-2 border-purple-500/30 border-t-purple-500 rounded-full inline-block animate-spin"></span>
+        <span className="w-8 h-8 border-2 border-emerald-700/30 border-t-emerald-700 rounded-full inline-block animate-spin"></span>
         <p className="mt-3 text-xs" style={{ color: 'var(--text-muted)' }}>Loading training history…</p>
       </div>
     );
@@ -1140,8 +1105,8 @@ function TrainingExplorerView({ modelStatus, onNavigate }) {
         <input
           type="range" min="0" max={steps.length - 1} value={currentStepIdx}
           onChange={(e) => { setIsPlaying(false); setCurrentStepIdx(parseInt(e.target.value, 10)); }}
-          className="w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-purple-600"
-          style={{ background: 'var(--border-color)' }}
+          className="w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-emerald-700"
+          style={{ background: 'var(--border-color)', accentColor: 'var(--accent-primary)' }}
         />
         <div className="flex justify-between text-[10px] mt-1 font-mono" style={{ color: 'var(--text-muted)' }}>
           <span>Start</span>
@@ -1155,7 +1120,7 @@ function TrainingExplorerView({ modelStatus, onNavigate }) {
         {/* Pairs Heap */}
         <div className="p-5 rounded-2xl shadow-sm space-y-4" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-color)' }}>
           <h4 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Top Pair (Highest Frequency)</h4>
-          <div className="p-3.5 rounded-xl" style={{ background: 'var(--accent-soft)', border: '1px solid rgba(139,92,246,0.3)' }}>
+          <div className="p-3.5 rounded-xl" style={{ background: 'var(--accent-soft)', border: '1px solid rgba(45,106,79,0.3)' }}>
             <div className="text-[10px] uppercase font-bold mb-1" style={{ color: 'var(--accent-primary)' }}>★ Selected for Merge</div>
             <div className="flex items-center justify-between font-mono">
               <span className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>'{step.first}' + '{step.second}'</span>
@@ -1169,7 +1134,7 @@ function TrainingExplorerView({ modelStatus, onNavigate }) {
                 key={idx}
                 className="flex items-center justify-between p-2 rounded-lg text-xs font-mono"
                 style={idx === 0
-                  ? { background: 'var(--accent-soft)', border: '1px solid rgba(139,92,246,0.25)', color: 'var(--accent-primary)', fontWeight: 600 }
+                  ? { background: 'var(--accent-soft)', border: '1px solid rgba(45,106,79,0.25)', color: 'var(--accent-primary)', fontWeight: 600 }
                   : { background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)' }
                 }
               >
@@ -1599,7 +1564,7 @@ function MergeRulesView({ modelStatus, onNavigate }) {
 // -------------------------------------------------------------
 // 8. Settings View
 // -------------------------------------------------------------
-function SettingsView({ modelStatus, theme, setTheme, onReset }) {
+function SettingsView({ modelStatus, onReset }) {
   const isReady = Boolean(modelStatus.isTrained && modelStatus.hasDataset);
   const [resetting, setResetting] = useState(false);
   const [resetMessage, setResetMessage] = useState(null);
@@ -1622,32 +1587,40 @@ function SettingsView({ modelStatus, theme, setTheme, onReset }) {
     <div className="space-y-6 max-w-3xl mx-auto">
       {/* Theme Card */}
       <div className="p-6 rounded-2xl shadow-sm space-y-4" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-color)' }}>
-        <h3 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>Appearance & Theme</h3>
-        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Choose your preferred interface theme. Selection is saved across sessions.</p>
-        <div className="grid grid-cols-2 gap-4 pt-1">
-          {[
-            { id: 'dark', icon: 'moon', label: 'Dark Theme', desc: 'Deep charcoal with violet accents' },
-            { id: 'light', icon: 'sun', label: 'Light Theme', desc: 'Warm cream tones, easy on the eyes' },
-          ].map(t => (
-            <button
-              key={t.id}
-              onClick={() => setTheme(t.id)}
-              className="p-4 rounded-xl text-left flex items-center justify-between transition"
-              style={theme === t.id
-                ? { border: '2px solid var(--accent-primary)', background: 'var(--accent-soft)' }
-                : { border: '1px solid var(--border-color)', background: 'var(--bg-elevated)' }
-              }
-            >
-              <div className="flex items-center gap-3">
-                <Icon name={t.icon} className="w-5 h-5" style={{ color: theme === t.id ? 'var(--accent-primary)' : 'var(--text-muted)' }} />
-                <div>
-                  <p className="text-sm" style={{ color: 'var(--text-primary)' }}>{t.label}</p>
-                  <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{t.desc}</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>Appearance & Theme</h3>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Unified single mode designed for long-session eye comfort — no harsh glare or pitch dark.</p>
+          </div>
+          <span className="px-2.5 py-1 rounded-full text-xs font-semibold" style={{ background: 'var(--accent-soft)', color: 'var(--accent-primary)', border: '1px solid var(--border-subtle)' }}>
+            Single Mode Active
+          </span>
+        </div>
+        <div className="p-4 rounded-xl flex flex-col md:flex-row items-center justify-between gap-4" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm" style={{ background: 'linear-gradient(135deg, #2d6a4f, #40916c)' }}>
+              <Icon name="sparkles" className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Forest Green + Warm Beige</p>
+              <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>Carefully balanced medium-tone luminance for maximum readability and visual comfort.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {[
+              { label: 'Forest Green', bg: '#2d6a4f', text: '#fff' },
+              { label: 'Sage Mist', bg: '#d3dfd3', text: '#2d6a4f' },
+              { label: 'Warm Beige', bg: '#ded8cc', text: '#1b281f' },
+              { label: 'Ivory Cream', bg: '#f1ede4', text: '#1b281f' }
+            ].map((swatch) => (
+              <div key={swatch.label} className="text-center">
+                <div className="w-8 h-8 rounded-lg border border-black/10 shadow-inner flex items-center justify-center font-bold text-[10px]" style={{ background: swatch.bg, color: swatch.text }}>
+                  ✓
                 </div>
+                <span className="text-[9px] block mt-1" style={{ color: 'var(--text-muted)' }}>{swatch.label.split(' ')[0]}</span>
               </div>
-              {theme === t.id && <Icon name="check" className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />}
-            </button>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 

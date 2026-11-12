@@ -7,14 +7,13 @@
   
   <!-- Inter & JetBrains Mono Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
-      darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
@@ -23,32 +22,16 @@
           },
           colors: {
             brand: {
-              50: '#f5f3ff',
-              100: '#ede9fe',
-              500: '#8b5cf6',
-              600: '#7c3aed',
-              700: '#6d28d9',
-            },
-            slateDark: {
-              950: '#0b0f17',
-              900: '#0f172a',
-              850: '#131d33',
-              800: '#1e293b',
-              750: '#243248',
-              700: '#334155'
+              50: '#edf5f0',
+              100: '#d5e7db',
+              500: '#40916c',
+              600: '#2d6a4f',
+              700: '#1b4332',
             }
           }
         }
       }
     }
-  </script>
-
-  <!-- Anti-flash: apply saved theme before React renders -->
-  <script>
-    (function() {
-      var t = localStorage.getItem('tf_theme') || 'dark';
-      if (t === 'dark') document.documentElement.classList.add('dark');
-    })();
   </script>
 
   <!-- React 18, ReactDOM 18 & Babel Standalone -->
@@ -57,34 +40,52 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <style>
-    /* Theme-aware base */
+    /* Green + Beige Unified Single Theme */
+    :root {
+      --bg-base: #ded8cc;
+      --bg-surface: #e8e3d7;
+      --bg-elevated: #f1ede4;
+      --border-color: #bfb8a6;
+      --border-subtle: #d0c9bb;
+      --text-primary: #1b281f;
+      --text-secondary: #3f4e43;
+      --text-muted: #69776b;
+      --accent-primary: #2d6a4f;
+      --accent-hover: #22533d;
+      --accent-soft: #d3dfd3;
+      --sidebar-bg: #e3ddd1;
+      --header-bg: rgba(227, 221, 209, 0.92);
+      --input-bg: #f3efe6;
+      --code-bg: #1a261d;
+      --code-text: #d9e8db;
+    }
+
+    /* Base Styling */
     body {
-      background: var(--bg-base, #f0ebe4);
-      color: var(--text-primary, #2a2118);
+      background: var(--bg-base);
+      color: var(--text-primary);
       font-family: 'Inter', sans-serif;
       -webkit-font-smoothing: antialiased;
     }
+
     /* Custom scrollbar */
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border-color, #e2d9cf); border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted, #9e8e80); }
+    ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
     /* Smooth focus rings */
-    *:focus-visible { outline: 2px solid var(--accent-primary, #7c5cbf); outline-offset: 2px; }
+    *:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
 
     /* Range slider thumb */
-    input[type=range]::-webkit-slider-thumb { accent-color: var(--accent-primary, #7c5cbf); }
-
-    /* Prevent flash-of-wrong-theme: set initial dark vars before React renders */
-    html.dark body { background: #0f1117; color: #e8eaf2; }
+    input[type=range]::-webkit-slider-thumb { accent-color: var(--accent-primary); }
+    input[type=range] { accent-color: var(--accent-primary); }
   </style>
 </head>
-<body class="font-sans antialiased selection:bg-purple-500 selection:text-white">
+<body class="font-sans antialiased selection:bg-emerald-800 selection:text-white">
   <div id="root"></div>
 
   <!-- Lucide icons via SVG components inline in Babel script -->
   <script type="text/babel" src="app.jsx"></script>
 </body>
 </html>
-
