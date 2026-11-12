@@ -64,7 +64,7 @@ public:
   const std::vector<MergeRule> &getMergeRules() const;
   const std::vector<TrainingIterationStep> &getTrainingHistory() const;
   const std::vector<std::string> &getInitialRawCorpus() const;
-  std::vector<std::vector<std::string>> getCurrentCorpusSequences() const;
+  std::vector<std::vector<std::string>> getCurrentCorpusSequences(size_t maxSequences = 25) const;
   size_t getCorpusSize() const;
 
   // Step 7.1 & 7.2: Save trained model (vocabulary & merge rules)

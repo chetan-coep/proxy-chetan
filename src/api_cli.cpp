@@ -36,9 +36,28 @@ static std::vector<std::string> readLines(const std::string &filepath) {
   if (!file.is_open()) return lines;
 
   std::string line;
+  size_t totalChars = 0;
+  const size_t MAX_LINES = 5000;
+  const size_t MAX_CHARS = 500000; // 500KB text slice for high-speed bounded training
+
   while (std::getline(file, line)) {
     if (!line.empty() && line.back() == '\r') line.pop_back();
-    if (!line.empty()) lines.push_back(line);
+    if (!line.empty()) {
+      if (line.size() > 1000) {
+        // Chunk long lines to avoid oversized single linked-lists
+        for (size_t i = 0; i < line.size() && totalChars < MAX_CHARS && lines.size() < MAX_LINES; i += 1000) {
+          std::string chunk = line.substr(i, 1000);
+          totalChars += chunk.size();
+          lines.push_back(chunk);
+        }
+      } else {
+        totalChars += line.size();
+        lines.push_back(line);
+      }
+    }
+    if (lines.size() >= MAX_LINES || totalChars >= MAX_CHARS) {
+      break;
+    }
   }
   return lines;
 }
@@ -79,11 +98,12 @@ int main(int argc, char* argv[]) {
     json << "  \"totalMerges\": " << trainer.getMergeRules().size() << ",\n";
     json << "  \"corpusSequencesCount\": " << trainer.getCorpusSize() << ",\n";
     
-    // Initial corpus
+    // Initial corpus preview (capped to top 25 for fast JSON payload)
     json << "  \"initialCorpus\": [\n";
     const auto &initialCorpus = trainer.getInitialRawCorpus();
-    for (size_t i = 0; i < initialCorpus.size(); ++i) {
-      json << "    \"" << escapeJson(initialCorpus[i]) << "\"" << (i + 1 < initialCorpus.size() ? "," : "") << "\n";
+    size_t previewLimit = std::min(initialCorpus.size(), static_cast<size_t>(25));
+    for (size_t i = 0; i < previewLimit; ++i) {
+      json << "    \"" << escapeJson(initialCorpus[i]) << "\"" << (i + 1 < previewLimit ? "," : "") << "\n";
     }
     json << "  ],\n";
 
@@ -108,12 +128,13 @@ int main(int argc, char* argv[]) {
       }
       json << "      ],\n";
       json << "      \"corpusTokens\": [\n";
-      for (size_t s = 0; s < step.corpusTokensSnapshot.size(); ++s) {
+      size_t maxSequencesToExport = std::min(step.corpusTokensSnapshot.size(), static_cast<size_t>(25));
+      for (size_t s = 0; s < maxSequencesToExport; ++s) {
         json << "        [";
         for (size_t t = 0; t < step.corpusTokensSnapshot[s].size(); ++t) {
           json << "\"" << escapeJson(step.corpusTokensSnapshot[s][t]) << "\"" << (t + 1 < step.corpusTokensSnapshot[s].size() ? ", " : "");
         }
-        json << "]" << (s + 1 < step.corpusTokensSnapshot.size() ? "," : "") << "\n";
+        json << "]" << (s + 1 < maxSequencesToExport ? "," : "") << "\n";
       }
       json << "      ]\n";
       json << "    }" << (h + 1 < history.size() ? "," : "") << "\n";

@@ -101,10 +101,12 @@ int BPETrainer::mergePairInCorpus(const std::string &first,
   return totalMerges;
 }
 
-std::vector<std::vector<std::string>> BPETrainer::getCurrentCorpusSequences() const {
+std::vector<std::vector<std::string>> BPETrainer::getCurrentCorpusSequences(size_t maxSequences) const {
   std::vector<std::vector<std::string>> res;
-  res.reserve(corpusSequences.size());
-  for (const LinkedList *seq : corpusSequences) {
+  size_t limit = std::min(corpusSequences.size(), maxSequences);
+  res.reserve(limit);
+  for (size_t i = 0; i < limit; ++i) {
+    const LinkedList *seq = corpusSequences[i];
     std::vector<std::string> row;
     Node *curr = seq->getHead();
     while (curr != nullptr) {
@@ -185,7 +187,7 @@ void BPETrainer::train(int maxMerges, int minFrequency) {
     // Keep top 15 pairs for visualization
     size_t numPairsToKeep = std::min(sortedPairs.size(), static_cast<size_t>(15));
     step.topAdjacentPairs.assign(sortedPairs.begin(), sortedPairs.begin() + numPairsToKeep);
-    step.corpusTokensSnapshot = getCurrentCorpusSequences();
+    step.corpusTokensSnapshot = getCurrentCorpusSequences(25);
 
     trainingHistory.push_back(step);
 

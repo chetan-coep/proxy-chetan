@@ -98,7 +98,13 @@ def run_cpp_cli(*args) -> dict:
             stderr=subprocess.PIPE,
             text=True,
             encoding="utf-8",
-            errors="replace"
+            errors="replace",
+            timeout=120
+        )
+    except subprocess.TimeoutExpired:
+        raise HTTPException(
+            status_code=408,
+            detail="Training timed out (exceeded 120 seconds). Please reduce the number of merge iterations."
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Engine execution failed: {str(e)}")
