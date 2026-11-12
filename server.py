@@ -405,11 +405,16 @@ async def serve_spa(full_path: str):
     if full_path.startswith("api/"):
         raise HTTPException(status_code=404, detail="API endpoint not found")
     file_path = WEB_DIR / full_path
+    headers = {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0"
+    }
     if file_path.exists() and file_path.is_file():
-        return FileResponse(file_path)
+        return FileResponse(file_path, headers=headers)
     index_html = WEB_DIR / "index.html"
     if index_html.exists():
-        return FileResponse(index_html)
+        return FileResponse(index_html, headers=headers)
     return JSONResponse({"message": "TokenForge API is running."})
 
 if __name__ == "__main__":
